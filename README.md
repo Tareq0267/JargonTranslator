@@ -33,7 +33,7 @@
 
 ## Setup
 
-### 0. Setup your JamAI Base Project
+### 1. Setup your JamAI Base Project
 - follow step 1(only) of the tutorial [here](https://docs.jamaibase.com/getting-started/quick-start/reactjs)
 - next create a new table with 2 collum:
 1. input
@@ -42,19 +42,35 @@
 you must have the table like so:
 ![image](https://github.com/user-attachments/assets/b55177d8-f254-44d0-863a-b4f4ed08edd2)
 
+setup the Output cell like so:
+```
+Table name: "your_table_id"
 
-### 1. Clone the Repository
+input: ${input}
+
+search within the input where NON-Laymen terms and give a brief explanation on what they are.keep it short and precise.IF THERE ARE NONE THEN RETURN NOTHING (" ").the maximum length of a title is 64 characters. follow this format:
+word:
+explanation...
+
+
+Remember to act as a cell in a spreadsheet and provide concise, relevant information without explanations unless specifically requested.
+DONT ADD UNECESSARY INFORMATION LIKE:
+" Here are the non-laymen terms with brief explanations:","Let me know if you'd like me to expand on any of these terms!","Description:"
+just output the non-laymen term and its explanation 
+```
+
+### 2. Clone the Repository
 ```bash
 git clone https://github.com/yourusername/JargonTranslator.git
 cd JargonTranslator
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure `.env`
+### 4. Configure `.env`
 Create a file named `.env` in the project folder and add:
 ```plaintext
 API_KEY=your_jamai_api_key
@@ -63,10 +79,10 @@ TABLE_ID=your_table_id
 
 ```
 
-## 4. Configure faster-whisper
+## 5. Configure faster-whisper
 follow the tutorial [here](https://github.com/SYSTRAN/faster-whisper)
 
-### 5. Install PyAudio
+### 6. Install PyAudio
 #### Windows:
 ```bash
 pip install pipwin
