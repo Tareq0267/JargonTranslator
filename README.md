@@ -97,15 +97,7 @@ python main.py
 ## Example Output
 - **Notification Title**: Artificial Intelligence (AI)
 - **Notification Message**: Computer science that enables machines to think and learn like humans.
-
 ---
-
-## License
-This project is licensed under the MIT License.
-
----
-
 **Author**: Tareq Adam  
 **GitHub**: [Tareq0267](https://github.com/Tareq0267)
-
 ---
