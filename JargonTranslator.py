@@ -90,6 +90,9 @@ def live_transcription():
     """Capture system audio, transcribe it, send to API, and display notifications."""
     print("Loading Whisper model...")
     model = WhisperModel("tiny", device="cpu")  # Use "tiny" for speed
+
+    # NOTE: If you have a GPU, you can use "cuda" for faster processing(replace "cpu" with "cuda")
+    
     print("Model loaded.")
 
     # Initialize PyAudio
