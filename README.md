@@ -10,6 +10,26 @@
 - **Secure Configuration**: Stores sensitive information in a `.env` file.
 
 ---
+## Models and Technologies Used
+
+1. **[Faster-Whisper](https://github.com/guillaumekln/faster-whisper)**:
+   - A fast implementation of OpenAI's Whisper model for audio transcription.
+   - Used the `tiny` model for optimized speed.
+
+2. **[JamAI Base](https://www.jamaibase.com/)**:
+   - Retrieval-Augmented Generation (RAG) system that provides insights and jargon explanations.
+   - Utilizes advanced LLMs like `Meta Llama-3.1-70B-Instruct`.
+
+3. **[Plyer](https://github.com/kivy/plyer)**:
+   - Cross-platform library for displaying desktop notifications.
+
+4. **[PyAudio](https://people.csail.mit.edu/hubert/pyaudio/)**:
+   - Captures system audio for transcription.
+
+5. **[Python-Dotenv](https://github.com/theskumar/python-dotenv)**:
+   - Manages environment variables securely.
+
+---
 
 ## Setup
 
