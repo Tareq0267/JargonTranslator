@@ -1,163 +1,152 @@
-import os
+import pyaudio
+from faster_whisper import WhisperModel
+import numpy as np
+import requests
+from plyer import notification
 from dotenv import load_dotenv
-import azure.cognitiveservices.speech as speechsdk
-import keyboard
-import pyautogui
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-from comtypes import CLSCTX_ALL
-import ctypes
-recognizer = None
-is_transcribing = None
-transcription_mode = None
+import os
 
-# Function to initialize the Azure Speech SDK >>>>>>>>>>>
-def init():
-    global recognizer
-    global is_transcribing
-    global transcription_mode
+# Load environment variables from .env file
+load_dotenv()
 
-    print("Initializing...")
-    # Load environment variables from .env file
-    load_dotenv()
+#retreive the api keys from the .env file
+PROJECT_ID = os.getenv("PROJECT_ID")
+API_KEY = os.getenv("API_KEY")
 
-    # Get API keys from environment variables >>>>>>>>>>>
-    speech_key = os.getenv("AZURE_SPEECH_KEY")
-    service_region = os.getenv("AZURE_REGION")
+# Constants for audio recording
+SAMPLE_RATE = 16000  # Whisper works well with 16kHz audio
+CHANNELS = 1         # Mono audio reduces processing load
+CHUNK_SIZE = 1024    # Frames per buffer
+BUFFER_DURATION = 10  # Process every 10 seconds
+LOOPBACK_DEVICE_INDEX = 1  # Replace with your Stereo Mix index
 
-    if not speech_key or not service_region:
-        raise ValueError("API keys are missing!")
+# JamAI API Configuration
+API_URL = "https://api.jamaibase.com/api/v1/gen_tables/action/rows/add"
+API_HEADERS = {
+    "accept": "application/json",
+    "content-type": "application/json",
+    "authorization": "Bearer " + API_KEY,
+    "X-PROJECT-ID": PROJECT_ID,
+}
 
-    # Configure Azure Speech SDK
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    speech_config.speech_recognition_language = "en-AU"
+def send_to_jamai(input_text):
+    """Send transcription to JamAI API and return the response."""
+    payload = {
+        "data": [{"input": input_text}],
+        "table_id": "pwd",
+        "stream": False,
+    }
+    try:
+        response = requests.post(API_URL, json=payload, headers=API_HEADERS)
+        response.raise_for_status()  # Raise an error for bad status codes
+        response_data = response.json()
 
-    is_transcribing = False
-    recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
+        # Extract the "Output" field
+        rows = response_data.get("rows", [])
+        if rows:
+            output = rows[0]["columns"]["Output"]["choices"][0]["message"]["content"]
+            return output
+        else:
+            return "No output received from JamAI."
+    except requests.exceptions.RequestException as e:
+        print(f"Error communicating with JamAI: {e}")
+        return "Error: Could not fetch response from JamAI."
 
-    # Prompt user to choose transcription mode
-    print("Press 'Ctrl+C' to exit")
-    mode = input("Choose transcription mode (1: Continuous, 2: One-shot): ").strip()
-    if mode == '1':
-        transcription_mode = 'continuous'
-        print("Press 'F2' to start or stop continuous transcription")
-    elif mode == '2':
-        transcription_mode = 'one_shot'
-        print("Press 'F2' to start a one-shot transcription")
-    else:
-        print("Invalid choice. Exiting...")
-        return
+def split_output_to_notifications(output):
+    """Split the output into title-description pairs."""
+    notifications = []
+    lines = output.strip().split("\n")  # Split by lines
 
+    title = None  # Temporary variable to store the current title
+    for line in lines:
+        line = line.strip()  # Remove extra spaces
+        if line.endswith(":"):  # Line is a title
+            if title:  # If a previous title exists without a description, add a placeholder
+                notifications.append((title, "No description provided."))
+            title = line[:-1]  # Remove the colon at the end
+        elif line:  # Line is a description
+            if title:  # If there's an active title, pair it with the description
+                notifications.append((title, line))
+                title = None  # Reset title after pairing
+            else:  # If there's no title, skip this line (unexpected case)
+                continue
 
-# Function to mute/unmute system volume using pycaw >>>>>>>>>>>
-def mute_system_volume(mute=True):
-    devices = AudioUtilities.GetSpeakers()
-    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-    volume = ctypes.cast(interface, ctypes.POINTER(IAudioEndpointVolume))
-    volume.SetMute(1 if mute else 0, None)
+    # Handle the last title without a description
+    if title:
+        notifications.append((title, "No description provided."))
 
+    return notifications
 
-# Function to type text using pyautogui >>>>>>>>>>>
-def type_text(text):
-    pyautogui.write(text)
+def show_notification(title, message):
+    """Display a notification with the given title and message."""
+    notification.notify(
+        title=title,
+        message=message,
+        app_name="JamAI Client",
+        timeout=10,  # Notification duration in seconds
+    )
 
+def live_transcription():
+    """Capture system audio, transcribe it, send to API, and display notifications."""
+    print("Loading Whisper model...")
+    model = WhisperModel("tiny", device="cpu")  # Use "tiny" for speed
+    print("Model loaded.")
 
-# Function to start transcription >>>>>>>>>>>
-def start_transcription():  
-    global recognizer
-    global is_transcribing
-    global transcription_mode
-    print("Starting transcription...\n")
-    print("Switch to the target window\r\n")
-    transcribe_and_type(recognizer)
+    # Initialize PyAudio
+    p = pyaudio.PyAudio()
+    stream = p.open(
+        format=pyaudio.paInt16,
+        channels=CHANNELS,
+        rate=SAMPLE_RATE,
+        input=True,
+        frames_per_buffer=CHUNK_SIZE,
+        input_device_index=LOOPBACK_DEVICE_INDEX,
+    )
+    print("Live transcription started. Press Ctrl+C to stop.")
 
+    # Buffer for audio data
+    audio_buffer = b""
 
-# Function to stop transcription >>>>>>>>>>>
-def end_transcription():
-    global recognizer
-    global is_transcribing
-    global transcription_mode
-
-    print("Stopping transcription...\n")
-    if transcription_mode == 'continuous':
-        recognizer.stop_continuous_recognition_async()
-        print("Press 'F2' to start or stop continuous transcription")
-    elif transcription_mode == 'one_shot':
-        print("Press 'F2' to start a one-shot transcription")
-
-    mute_system_volume(mute=False)  # Unmute the system volume
-    is_transcribing = False
-    print("Press 'F2' to start transcription")
-
-
-# Function to perform transcription >>>>>>>>>>>
-def transcribe_and_type(recognizer):
-    global transcription_mode
-    # Set up microphone for real-time transcription
-    audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
-    
-    # Function to process transcription results >>>>>>>>>>>
-    def recognized(evt):
-        
-        new_text = evt.result.text + " "  # Add a space at the end
-        print(f"> {new_text}")  # Log it to the console
-        type_text(new_text)
-
-        if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            print("Recognized: {}".format(evt.result.text))
-        elif evt.result.reason == speechsdk.ResultReason.NoMatch:
-            print("No speech could be recognized: {}".format(evt.result.no_match_details))
-        elif evt.result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = evt.result.cancellation_details
-            print("Speech Recognition canceled: {}".format(cancellation_details.reason))
-        if cancellation_details.reason == speechsdk.CancellationReason.Error:
-            print("Error details: {}".format(cancellation_details.error_details))
-        # if new_text is empty, warn the user and stop the transcription
-        if not evt.result.text:
-            print("No speech detected. Stopping transcription.")
-            end_transcription()
-            return
-
-
-    # Track if the event handler has been connected 
-    if not hasattr(recognizer, 'handler_connected'):
-        recognizer.recognized.connect(recognized)
-        recognizer.handler_connected = True  # Flag indicating handler is connected
-
-    # Mute system volume
-    mute_system_volume(mute=True)
-
-    # Start transcription based on the chosen mode
-    if transcription_mode == 'continuous':
-        recognizer.start_continuous_recognition_async()
-        is_transcribing = True
-    elif transcription_mode == 'one_shot':
-        recognizer.recognize_once()
-        end_transcription()
-
-
-# Main function >>>>>>>>>>>
-def main():
-    global is_transcribing
-    init()
-
-    # Main loop for listening to hotkeys
     try:
         while True:
-            # Wait for F2 key press
-            keyboard.wait("F2")  # Blocks until F2 is pressed
-            if not is_transcribing:
-                 start_transcription()
-            else:
-                end_transcription()
+            # Read audio data from the stream
+            audio_data = stream.read(CHUNK_SIZE, exception_on_overflow=False)
+            audio_buffer += audio_data
+
+            # Process transcription when buffer is full
+            if len(audio_buffer) >= SAMPLE_RATE * CHANNELS * BUFFER_DURATION * 2:
+                # Convert buffer to NumPy array
+                audio_np = np.frombuffer(audio_buffer, dtype=np.int16).astype(np.float32) / 32768.0
+
+                # Transcribe with reduced beam size for faster output
+                transcription = ""
+                segments, _ = model.transcribe(audio_np, beam_size=1)
+                for segment in segments:
+                    transcription += segment.text + " "
+
+                print(f"Transcription: {transcription.strip()}")
+
+                # Send transcription to JamAI API
+                api_response = send_to_jamai(transcription.strip())
+                print(f"API Response: {api_response}")
+
+                # Split API response into notifications
+                notifications = split_output_to_notifications(api_response)
+
+                # Display each notification
+                for title, description in notifications:
+                    print(f"Displaying Notification - Title: {title}, Description: {description}")
+                    show_notification(title, description)
+
+                # Clear buffer
+                audio_buffer = b""
 
     except KeyboardInterrupt:
-        # Gracefully handle Ctrl+C and stop transcription
-        if is_transcribing:
-            end_transcription()
+        print("\nTranscription stopped.")
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
 
-        print("Exiting...")
-        exit(0)
-
-# Entry point
 if __name__ == "__main__":
-    main()
+    live_transcription()
