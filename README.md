@@ -4,7 +4,7 @@
 **JargonTranslator** is a tool for **real-time transcription** and **jargon translation**. It listens to system audio, transcribes it, and uses **JamAI** to explain technical terms or jargon in the transcription. The results are displayed as desktop notifications.
 
 ## Features
-- **Live Transcription**: Captures system audio and transcribes it in real time using FastWisper.
+- **Live Transcription**: Captures system audio and transcribes it in real time using faster-wisper.
 - **JamAI API Integration**: Sends transcription to JamAI for jargon explanations.
 - **Notifications**: Displays jargon explanations as title-description desktop notifications.
 - **Secure Configuration**: Stores sensitive information in a `.env` file.
