@@ -135,6 +135,7 @@ python JargonTranlator.py
 - **Notification Title**: Artificial Intelligence (AI)
 - **Notification Message**: Computer science that enables machines to think and learn like humans.
 ---
-**Author**: Tareq Adam  
-**GitHub**: [Tareq0267](https://github.com/Tareq0267)
+
+- **Author**: Tareq Adam  
+- **GitHub**: [Tareq0267](https://github.com/Tareq0267)
 ---
