@@ -57,9 +57,10 @@ pip install -r requirements.txt
 ### 3. Configure `.env`
 Create a file named `.env` in the project folder and add:
 ```plaintext
-JAMAI_API_URL=https://api.jamaibase.com/api/v1/gen_tables/action/rows/add
-JAMAI_API_KEY=your_jamai_api_key
-JAMAI_PROJECT_ID=your_project_id
+API_KEY=your_jamai_api_key
+PROJECT_ID=your_project_id
+TABLE_ID=your_table_id
+
 ```
 
 ## 4. Configure faster-whisper
@@ -88,9 +89,9 @@ pip install pyaudio
 
 ## Usage
 
-1. Run the main script:
+1. Run the script:
 ```bash
-python main.py
+python JargonTranlator.py
 ```
 
 2. The script will:

@@ -12,6 +12,7 @@ load_dotenv()
 #retreive the api keys from the .env file
 PROJECT_ID = os.getenv("PROJECT_ID")
 API_KEY = os.getenv("API_KEY")
+TABLE_ID = os.getenv("TABLE_ID")
 
 # Constants for audio recording
 SAMPLE_RATE = 16000  # Whisper works well with 16kHz audio
@@ -33,7 +34,7 @@ def send_to_jamai(input_text):
     """Send transcription to JamAI API and return the response."""
     payload = {
         "data": [{"input": input_text}],
-        "table_id": "pwd",
+        "table_id": TABLE_ID,
         "stream": False,
     }
     try:
