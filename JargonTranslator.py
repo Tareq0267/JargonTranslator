@@ -129,18 +129,22 @@ def live_transcription():
                     transcription += segment.text + " "
 
                 print(f"Transcription: {transcription.strip()}")
+                
+                if transcription.strip() and transcription.strip() != "." and transcription.strip() != "" and transcription.strip() != " ":
+                    
+                    # Send transcription to JamAI API
+                    api_response = send_to_jamai(transcription.strip())
+                    print(f"API Response: {api_response}")
 
-                # Send transcription to JamAI API
-                api_response = send_to_jamai(transcription.strip())
-                print(f"API Response: {api_response}")
+                    # Split API response into notifications
+                    notifications = split_output_to_notifications(api_response)
 
-                # Split API response into notifications
-                notifications = split_output_to_notifications(api_response)
-
-                # Display each notification
-                for title, description in notifications:
-                    print(f"Displaying Notification - Title: {title}, Description: {description}")
-                    show_notification(title, description)
+                    # Display each notification
+                    for title, description in notifications:
+                        print(f"Displaying Notification - Title: {title}, Description: {description}")
+                        show_notification(title, description)                 
+                else:
+                    print("No transcription, skipping API call.")
 
                 # Clear buffer
                 audio_buffer = b""
