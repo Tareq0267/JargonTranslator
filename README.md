@@ -107,7 +107,25 @@ pip install pyaudio
 
 1. Run the script:
 ```bash
-python JargonTranlator.py
+python JargonTranslator.py
+```
+
+### Command Line Options (v2)
+```bash
+# List available audio devices
+python JargonTranslator_v2.py --list-devices
+
+# Run with specific device
+python JargonTranslator_v2.py --device 2
+
+# Use larger model with GPU
+python JargonTranslator_v2.py --model small --gpu
+
+# Adjust buffer and silence threshold
+python JargonTranslator_v2.py --buffer 15 --silence-threshold 300
+
+# Verbose logging
+python JargonTranslator_v2.py --verbose
 ```
 
 2. The script will:
