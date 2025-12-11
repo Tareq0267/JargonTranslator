@@ -1,3 +1,9 @@
 .env
 stereo_mix_recording.wav
 ISSUES.md
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
