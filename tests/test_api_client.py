@@ -236,7 +236,7 @@ class TestCreateClient:
         assert isinstance(client, JamAIClient)
         assert client.config == api_config
     
-    @patch('src.api_client.get_api_config')
+    @patch('src.config.get_api_config')
     def test_loads_config_from_env(self, mock_get_config):
         """Test that config is loaded from env when not provided."""
         mock_config = APIConfig(

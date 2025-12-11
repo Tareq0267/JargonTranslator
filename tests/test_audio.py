@@ -22,40 +22,40 @@ class TestIsSilent:
         """Test that very low amplitude audio is detected as silent."""
         # Create near-zero amplitude audio
         silent_audio = np.zeros(1000, dtype=np.float32)
-        assert is_silent(silent_audio) is True
+        assert is_silent(silent_audio) == True
     
     def test_loud_audio(self):
         """Test that loud audio is not detected as silent."""
         # Create loud audio (sine wave)
         loud_audio = np.sin(np.linspace(0, 10 * np.pi, 1000)).astype(np.float32) * 10000
-        assert is_silent(loud_audio) is False
+        assert is_silent(loud_audio) == False
     
     def test_custom_threshold(self):
         """Test with custom silence threshold."""
         # Audio with RMS around 100
         audio = np.ones(1000, dtype=np.float32) * 100
-        
+
         # Should be silent with high threshold
-        assert is_silent(audio, threshold=200) is True
+        assert is_silent(audio, threshold=200) == True
         
         # Should not be silent with low threshold
-        assert is_silent(audio, threshold=50) is False
+        assert is_silent(audio, threshold=50) == False
     
     def test_threshold_boundary(self):
         """Test behavior at threshold boundary."""
         # Create audio with known RMS
         rms_value = 500.0
         audio = np.ones(1000, dtype=np.float32) * rms_value
-        
+
         # Exactly at threshold - should be silent (< comparison)
-        assert is_silent(audio, threshold=rms_value) is False
-        assert is_silent(audio, threshold=rms_value + 1) is True
+        assert is_silent(audio, threshold=rms_value) == False
+        assert is_silent(audio, threshold=rms_value + 1) == True
     
     def test_negative_values(self):
         """Test that negative values are handled correctly."""
         # Negative values should contribute to RMS
         audio = np.ones(1000, dtype=np.float32) * -1000
-        assert is_silent(audio) is False
+        assert is_silent(audio) == False
     
     def test_empty_array(self):
         """Test with empty array (edge case)."""
@@ -64,9 +64,7 @@ class TestIsSilent:
         # nan < threshold is False
         result = is_silent(empty_audio)
         # Result will be False due to NaN comparison
-        assert result is False
-
-
+        assert result == False
 class TestNormalizeAudio:
     """Test normalize_audio function."""
     
